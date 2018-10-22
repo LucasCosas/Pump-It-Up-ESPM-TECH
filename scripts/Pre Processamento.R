@@ -28,12 +28,16 @@ df$recorded_by <-NULL
 
 #Transforming to factor
 df$payment <- as.factor( df$payment )
-train.df$ward <- as.factor( train.df$ward )
+df$ward <- as.factor(df$ward)
 
 
 #Plotting to find outliers
 plot(df$amount_tsh ~ df$quality_group, pch=19, main="Relação entre ")
 plot(df$amount_tsh ~ df$waterpoint_type , pch=19, main="Relação entre ")
 
+#Normalize all numeric columns
 
+df$amount_tsh <- scale(df$amount_tsh)
 
+df <- df[!(df$amount_tsh>0.1),]
+summary(df$amount_tsh)
