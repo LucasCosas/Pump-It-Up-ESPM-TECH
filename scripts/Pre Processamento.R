@@ -1,4 +1,4 @@
-df <- read.csv("C:/Users/11510206/OneDrive/Semestres/Oitavo Semestre/Machine Learning and Data Analytics/Projeto/trainingdt.csv", na.strings=c("","NA"))
+df <- read.csv("./data/trainingdt.csv", na.strings=c("","NA"))
 
 #replace blank values to "NA"
 
