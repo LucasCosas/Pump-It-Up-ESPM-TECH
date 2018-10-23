@@ -1,0 +1,40 @@
+---
+title: "Pump it Up"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Grupo
+
+O grupo que realizou essa entrega foi:
+Lucas Cosas; Pedro Freitas; Ricardo Pedrotti - TECH 8A
+
+## Objetivo
+
+O objetivo deste projeto e criar um modelo capaz de predizer uma destas tres classes baseado em um conjunto de variaveis sobre tipo de bomba de agua, quando foi instalada e como e administrada. Uma compreensao adequada de quais serao os pontos de agua que irao falhar pode melhorar a manutencao das bombas de agua e garantir que agua limpa e potavel seja sempre disponibilizada para todas as comunidades da Tanzania.
+
+## Carregando os Dados
+```{r}
+treinamento <- read.csv("./data/trainingdt.csv", na.strings=c("","NA"))
+teste <- read.csv("./data/test.csv", na.strings=c("","NA"))
+
+#inserimos as classes que precisamos predizer 
+classe <- read.csv("./data/training labels.csv")
+treinamento <- cbind(treinamento, classe)
+
+```
+
+##Trocando valores em branco para "NA"
+```{r}
+
+
+```
+
+##Number of NA in Dataframe
+```{r}
+
+
+```

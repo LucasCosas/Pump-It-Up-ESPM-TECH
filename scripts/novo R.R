@@ -1,24 +1,9 @@
-
 treinamento <- read.csv("./data/trainingdt.csv", na.strings=c("","NA"))
 teste <- read.csv("./data/test.csv", na.strings=c("","NA"))
-classeteste <- read.csv("./data/SubmissionFormat.csv", na.strings=c("","NA"))
-
 #inseri as classes que precisamos predizer 
 classe <- read.csv("./data/training labels.csv")
 
 treinamento <- cbind(treinamento, classe)
-
-#Number of NA in Dataframe
-sapply(treinamento, function(x) sum(is.na(x)))
-
-summary(treinamento)
-treinamento$scheme_name
-
-#----------------------------
-#Variáveis que um dos caras que o cosas mandou elimina (colocar em ordem pra diferenciar do script do cara?)
-#arrumei o nome das variáveis do cara pra ficar igual as nossas
-
-
 
 treinamento$recorded_by = NULL
 teste$recorded_by = NULL
@@ -80,11 +65,8 @@ teste$ward = NULL
 treinamento$id <- NULL
 teste$id <- NULL
 
-#treinamento$funder <-NULL
-#teste$funder <- NULL
 
-#----------------------------
-
+# FUNDER
 
 trim<-as.data.frame(treinamento$funder)
 trimTest <- as.data.frame(teste$funder)
@@ -124,12 +106,10 @@ funder <- factor(teste$funder, levels=c(funders_levels, "Other"))
 funder[is.na(funder)] <- "Other"
 teste$funder <- funder
 
-#Diminuindo levels
-sapply(treinamento, nlevels)
-sapply(teste, nlevels)
+teste$funder <- NULL
+treinamento$funder <- NULL
 
-
-
+# numeric 
 library(stringr)
 treinamento$date_recorded <- str_sub(treinamento$date_recorded, -12, -7)
 treinamento$date_recorded <- as.numeric(treinamento$date_recorded)
@@ -138,7 +118,7 @@ teste$date_recorded <- str_sub(teste$date_recorded, -12, -7)
 teste$date_recorded <- as.numeric(teste$date_recorded)
 
 
-#Normalize all numeric columns
+#normalize
 
 treinamento$amount_tsh <- scale(treinamento$amount_tsh)
 
@@ -152,6 +132,10 @@ teste <- teste[!(teste$amount_tsh>0.1),]
 
 teste$date_recorded <- scale(teste$date_recorded)
 
+treinamento$amount_tsh <- as.numeric(treinamento$amount_tsh)
+teste$amount_tsh <- as.numeric(teste$amount_tsh)
+treinamento$date_recorded <- as.numeric(treinamento$date_recorded)
+teste$date_recorded <- as.numeric(teste$date_recorded)
 
 # predict
 library(randomForest)
@@ -171,6 +155,12 @@ permit.test$permit <- predictteste
 
 treinamento <- rbind(permit.treinamento, permit.test)
 
+
+#Sorting factor vars
+sort(table(treinamento$waterpoint_type), decreasing = TRUE)
+sort(table(teste$waterpoint_type), decreasing = TRUE)
+
+
 #Criando modelo pra prever o status_group
 
 row.has.na <- apply(treinamento, 1, function(x){any(is.na(x))})
@@ -178,7 +168,7 @@ treinamento <- treinamento[!row.has.na,]
 
 model <- randomForest(status_group ~., data=treinamento)
 
-predicttest <- predict(model, newdata=teste)
+predteste <- predict(model, newdata=teste)
 
 table <- table(predicttest, teste$status_group)
 confusionMatrix(tT)
