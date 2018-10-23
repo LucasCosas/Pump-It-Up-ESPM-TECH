@@ -3,7 +3,7 @@ teste <- read.csv("./data/test.csv", na.strings=c("","NA"))
 #inseri as classes que precisamos predizer 
 classe <- read.csv("./data/training labels.csv")
 
-treinamento <- cbind(treinamento, classe)
+treinamento <- merge(treinamento, classe, by="id")
 
 treinamento$recorded_by = NULL
 teste$recorded_by = NULL
@@ -62,53 +62,10 @@ teste$installer = NULL
 treinamento$ward = NULL
 teste$ward = NULL
 
-treinamento$id <- NULL
-teste$id <- NULL
 
 
-# FUNDER
-
-trim<-as.data.frame(treinamento$funder)
-trimTest <- as.data.frame(teste$funder)
-
-trim<-as.data.frame(apply(trim,2,function(x)gsub('\s+', '',x)))
-trimTest <- as.data.frame(apply(trimTest,2,function(x)gsub('\s+','',x)))
-
-trim[trim %in% c("0", "", "-"," ","")] <- "other"
-trimTest[trimTest %in% c("0", "_", "-"," ","")] <- "other"
-
-treinamento$newfunder<-trim[,1]
-teste$newfunder <- trimTest[,1]
-
-treinamento$newfunder <- substr(tolower(treinamento$funder),1,3)
-teste$newfunder <- substr(tolower(teste$funder),1,3)
-
-treinamento$funder<-treinamento$newfunder
-teste$funder <- teste$newfunder
-
-treinamento$newfunder<-NULL
-teste$newfunder <- NULL
-
-treinamento$funder[treinamento$funder %in% c("0", "", "-"," ","")] <- "other"
-teste$funder[teste$funder %in% c("0", "", "-"," ","")] <- "other"
-
-treinamento$funder <- as.factor(treinamento$funder)
-teste$funder <- as.factor(teste$funder)
-
-limitLevels = 10
-
-funders_levels <- names(summary(treinamento$funder)[1:limitLevels])
-funder <- factor(treinamento$funder, levels=c(funders_levels, "Other"))
-funder[is.na(funder)] <- "Other"
-treinamento$funder <- funder
-
-funder <- factor(teste$funder, levels=c(funders_levels, "Other"))
-funder[is.na(funder)] <- "Other"
-teste$funder <- funder
-
-teste$funder <- NULL
 treinamento$funder <- NULL
-
+teste$funder <- NULL
 # numeric 
 library(stringr)
 treinamento$date_recorded <- str_sub(treinamento$date_recorded, -12, -7)
@@ -127,8 +84,6 @@ treinamento <- treinamento[!(treinamento$amount_tsh>0.1),]
 treinamento$date_recorded <- scale(treinamento$date_recorded)
 
 teste$amount_tsh <- scale(teste$amount_tsh)
-
-teste <- teste[!(teste$amount_tsh>0.1),]
 
 teste$date_recorded <- scale(teste$date_recorded)
 
@@ -153,22 +108,47 @@ model.permit <- randomForest(permit ~., data=permit.treinamento)
 predictteste <- predict(model.permit, newdata=permit.test)
 permit.test$permit <- predictteste
 
-treinamento <- rbind(permit.treinamento, permit.test)
+permit.test.id <- permit.test$id
+
+permit.test <- cbind(permit.test$id, permit.test$permit)
 
 
-#Sorting factor vars
-sort(table(treinamento$waterpoint_type), decreasing = TRUE)
-sort(table(teste$waterpoint_type), decreasing = TRUE)
+treinamento <- merge(permit.treinamento, permit.test, by="id")
+
 
 
 #Criando modelo pra prever o status_group
 
+treinamento$id <- NULL
+teste$id <- NULL
+
 row.has.na <- apply(treinamento, 1, function(x){any(is.na(x))})
 treinamento <- treinamento[!row.has.na,]
 
-model <- randomForest(status_group ~., data=treinamento)
+names(treinamento)
 
-predteste <- predict(model, newdata=teste)
+formula <- status_group ~ date_recorded + water_quality + basin + payment + management + extraction_type_class + quantity + region + amount_tsh + gps_height + permit + population
 
-table <- table(predicttest, teste$status_group)
-confusionMatrix(tT)
+modelo <- randomForest(formula, ntree = 250, data =  treinamento, importance=TRUE)
+
+predict <- predict(modelo, newdata=teste)
+
+teste$predicted <- predict
+
+
+teste$predicted <- as.factor(
+  ifelse(is.na(teste$predicted),
+         "functional",
+         paste(teste$predicted))
+)
+
+
+submiting <- teste[, c('predicted')]
+
+submitingID <- read.csv("./data/SubmissionFormat.csv")
+submitingID$status_group <- submiting
+submiting <- submitingID
+
+names(submiting) <- c('ID','status_group')
+write.csv(submiting, "results_1.csv",row.names = FALSE)
+
