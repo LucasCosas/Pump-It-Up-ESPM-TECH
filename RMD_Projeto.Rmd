@@ -16,6 +16,18 @@ Lucas Cosas; Pedro Freitas; Ricardo Pedrotti - TECH 8A
 
 O objetivo deste projeto e criar um modelo capaz de predizer uma destas tres classes baseado em um conjunto de variaveis sobre tipo de bomba de agua, quando foi instalada e como e administrada. Uma compreensao adequada de quais serao os pontos de agua que irao falhar pode melhorar a manutencao das bombas de agua e garantir que agua limpa e potavel seja sempre disponibilizada para todas as comunidades da Tanzania.
 
+## Modelo
+
+O modelo criado utiliza o algoritmo de RandomForest com 250 árvores de decisão criadas aleatoriamente. O modelo teve 0.75 de acurácia segundo o site da competição.
+
+Para criação do modelo primeiramente obtivemos a correlação das variáveis em relação a variável que iríamos predizer, apenas para sabermos o que poderia ser removido, removendo também as variáveis que continham apenas IDs ou valores idênticos.
+
+Normalizamos os dados numéricos de ano e TSH para retirarmos os outliers.
+
+Feito o pré processamento, utilizamos o próprio dataset para predizer a variável permit, que continha muitos valores nulos. Após a predição, utilizamos essa nova variável predita para treinar o modelo final.
+
+O modelo final foi utilizado para prever a variável status_group.
+
 ## Carregando os Dados e fazendo merge entre o dataset de treinamento e a classe a ser predita
 ```{r}
 treinamento <- read.csv("./data/trainingdt.csv", na.strings=c("","NA"))
@@ -143,7 +155,7 @@ permit.test.id <- permit.test$id
 permit.test <- cbind(permit.test$id, permit.test$permit)
 
 
-treinamento <- merge(permit.treinamento, permit.test, by="id")
+#treinamento <- merge(permit.treinamento, permit.test, by="id")
 
 ```
 

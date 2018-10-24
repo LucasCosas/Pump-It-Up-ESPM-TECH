@@ -109,11 +109,11 @@ predictteste <- predict(model.permit, newdata=permit.test)
 permit.test$permit <- predictteste
 
 permit.test.id <- permit.test$id
+permit.test.permit <- permit.test$permit
 
-permit.test <- cbind(permit.test$id, permit.test$permit)
+permit.test.new <- cbind(permit.test.id, permit.test.permit)
 
-
-treinamento <- merge(permit.treinamento, permit.test, by="id")
+#treinamento <- merge(permit.treinamento, permit.test.new, by="id")
 
 
 
