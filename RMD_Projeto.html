@@ -132,9 +132,14 @@ $(document).ready(function () {
 <h2>Objetivo</h2>
 <p>O objetivo deste projeto e criar um modelo capaz de predizer uma destas tres classes baseado em um conjunto de variaveis sobre tipo de bomba de agua, quando foi instalada e como e administrada. Uma compreensao adequada de quais serao os pontos de agua que irao falhar pode melhorar a manutencao das bombas de agua e garantir que agua limpa e potavel seja sempre disponibilizada para todas as comunidades da Tanzania.</p>
 </div>
+<div id="resultado-updated-2811" class="section level2">
+<h2>RESULTADO (updated 28/11)</h2>
+<p>A partir da criação do modelo descrito abaixo, enviamos os resultados preditos ao site da competição e obtivemos 75.8% de acurácia, ficando assim na posição 1361 de 5956 competidores.</p>
+<p>Submissão realizada no dia 23/10/2018 e rank atualizado em 28/11/2018</p>
+</div>
 <div id="modelo" class="section level2">
 <h2>Modelo</h2>
-<p>O modelo criado utiliza o algoritmo de RandomForest com 250 árvores de decisão criadas aleatoriamente. O modelo teve 0.75 de acurácia segundo o site da competição.</p>
+<p>O modelo criado utiliza o algoritmo de RandomForest com 250 árvores de decisão criadas aleatoriamente.</p>
 <p>Para criação do modelo primeiramente obtivemos a correlação das variáveis em relação a variável que iríamos predizer, apenas para sabermos o que poderia ser removido, removendo também as variáveis que continham apenas IDs ou valores idênticos.</p>
 <p>Normalizamos os dados numéricos de ano e TSH para retirarmos os outliers.</p>
 <p>Feito o pré processamento, utilizamos o próprio dataset para predizer a variável permit, que continha muitos valores nulos. Após a predição, utilizamos essa nova variável predita para treinar o modelo final.</p>
@@ -276,6 +281,81 @@ permit.test &lt;- cbind(permit.test$id, permit.test$permit)
 
 
 #treinamento &lt;- merge(permit.treinamento, permit.test, by=&quot;id&quot;)</code></pre>
+</div>
+<div id="criando-modelo-para-fazer-testes-no-proprio-conjunto-de-treinamento" class="section level2">
+<h2>Criando modelo para fazer testes no próprio conjunto de treinamento</h2>
+<pre class="r"><code>tr.treinamento &lt;- treinamento
+
+row.has.na &lt;- apply(tr.treinamento, 1, function(x){any(is.na(x))})
+tr.treinamento &lt;- tr.treinamento[!row.has.na,]
+
+
+library(caret)</code></pre>
+<pre><code>## Warning: package 'caret' was built under R version 3.5.1</code></pre>
+<pre><code>## Loading required package: lattice</code></pre>
+<pre><code>## Loading required package: ggplot2</code></pre>
+<pre><code>## 
+## Attaching package: 'ggplot2'</code></pre>
+<pre><code>## The following object is masked from 'package:randomForest':
+## 
+##     margin</code></pre>
+<pre class="r"><code>set.seed(1234)
+trainIndex &lt;- createDataPartition(tr.treinamento$status_group, p = .8,
+                                  list = FALSE,
+                                  times = 1)
+tr.train &lt;- tr.treinamento[trainIndex,]
+tr.test &lt;- tr.treinamento[-trainIndex,]
+
+tr.form &lt;- status_group ~ date_recorded + water_quality + basin + payment + management + extraction_type_class + quantity + region + amount_tsh + gps_height + permit + population
+
+tr.modelo &lt;- randomForest(tr.form, ntree = 250, data =  tr.train, importance=TRUE)
+
+tr.predict &lt;- predict(tr.modelo, newdata=tr.test)
+
+confusionMatrix(table(tr.predict,tr.test$status_group))</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##                          
+## tr.predict                functional functional needs repair
+##   functional                    4601                     476
+##   functional needs repair         63                     116
+##   non functional                 476                     127
+##                          
+## tr.predict                non functional
+##   functional                        1083
+##   functional needs repair             20
+##   non functional                    2802
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.7701          
+##                  95% CI : (0.7616, 0.7784)
+##     No Information Rate : 0.5264          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.5636          
+##  Mcnemar's Test P-Value : &lt; 2.2e-16       
+## 
+## Statistics by Class:
+## 
+##                      Class: functional Class: functional needs repair
+## Sensitivity                     0.8951                        0.16134
+## Specificity                     0.6628                        0.99082
+## Pos Pred Value                  0.7469                        0.58291
+## Neg Pred Value                  0.8504                        0.93696
+## Prevalence                      0.5264                        0.07364
+## Detection Rate                  0.4712                        0.01188
+## Detection Prevalence            0.6309                        0.02038
+## Balanced Accuracy               0.7790                        0.57608
+##                      Class: non functional
+## Sensitivity                         0.7175
+## Specificity                         0.8971
+## Pos Pred Value                      0.8229
+## Neg Pred Value                      0.8265
+## Prevalence                          0.3999
+## Detection Rate                      0.2870
+## Detection Prevalence                0.3487
+## Balanced Accuracy                   0.8073</code></pre>
 </div>
 <div id="criando-o-modelo-para-prever-status_group" class="section level2">
 <h2>Criando o modelo para prever status_group</h2>

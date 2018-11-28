@@ -16,9 +16,15 @@ Lucas Cosas; Pedro Freitas; Ricardo Pedrotti - TECH 8A
 
 O objetivo deste projeto e criar um modelo capaz de predizer uma destas tres classes baseado em um conjunto de variaveis sobre tipo de bomba de agua, quando foi instalada e como e administrada. Uma compreensao adequada de quais serao os pontos de agua que irao falhar pode melhorar a manutencao das bombas de agua e garantir que agua limpa e potavel seja sempre disponibilizada para todas as comunidades da Tanzania.
 
+## RESULTADO (updated 28/11)
+
+A partir da criação do modelo descrito abaixo, enviamos os resultados preditos ao site da competição e obtivemos 75.8% de acurácia, ficando assim na posição 1361 de 5956 competidores.
+
+Submissão realizada no dia 23/10/2018 e rank atualizado em 28/11/2018
+
 ## Modelo
 
-O modelo criado utiliza o algoritmo de RandomForest com 250 árvores de decisão criadas aleatoriamente. O modelo teve 0.75 de acurácia segundo o site da competição.
+O modelo criado utiliza o algoritmo de RandomForest com 250 árvores de decisão criadas aleatoriamente.
 
 Para criação do modelo primeiramente obtivemos a correlação das variáveis em relação a variável que iríamos predizer, apenas para sabermos o que poderia ser removido, removendo também as variáveis que continham apenas IDs ou valores idênticos.
 
@@ -156,6 +162,32 @@ permit.test <- cbind(permit.test$id, permit.test$permit)
 
 
 #treinamento <- merge(permit.treinamento, permit.test, by="id")
+
+```
+## Criando modelo para fazer testes no próprio conjunto de treinamento
+```{r}
+
+tr.treinamento <- treinamento
+
+row.has.na <- apply(tr.treinamento, 1, function(x){any(is.na(x))})
+tr.treinamento <- tr.treinamento[!row.has.na,]
+
+
+library(caret)
+set.seed(1234)
+trainIndex <- createDataPartition(tr.treinamento$status_group, p = .8,
+                                  list = FALSE,
+                                  times = 1)
+tr.train <- tr.treinamento[trainIndex,]
+tr.test <- tr.treinamento[-trainIndex,]
+
+tr.form <- status_group ~ date_recorded + water_quality + basin + payment + management + extraction_type_class + quantity + region + amount_tsh + gps_height + permit + population
+
+tr.modelo <- randomForest(tr.form, ntree = 250, data =  tr.train, importance=TRUE)
+
+tr.predict <- predict(tr.modelo, newdata=tr.test)
+
+confusionMatrix(table(tr.predict,tr.test$status_group))
 
 ```
 
